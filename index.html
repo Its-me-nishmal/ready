@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toggle Pointer Lock and Fullscreen</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        body {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #target {
+            width: 100px;
+            height: 100px;
+            background-color: red;
+            position: relative;
+        }
+
+        #center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background-color: green;
+            transform: translate(-50%, -50%);
+        }
+        #countdownTimer {
+            display: none;
+            font-size: 30rem;
+            color: darkred;
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <button id="lockButton">Don't Click😎</button>
+    <h1 id="lockedMessage" style="display: none;">Pointer is locked! Press "Esc" to unlock.</h1>
+    <h1 id="countdownTimer">60</h1>
+    <audio id="audio" src="ok.mp3" volume="1"></audio>
+
+    <script>
+        let isPointerLocked = false;
+        let isFullscreen = false;
+        let keysPressed = new Set();
+        let countdown = 60; // Initial countdown value in seconds
+        let countdownInterval; // Variable to store the interval reference
+
+        function toggleLockPointerAndFullscreen() {
+            if (keysPressed.size > 1) {
+                alert('Are you cheating me?');
+                return;
+            }
+
+            if (!isPointerLocked) {
+                const target = document.body;
+                if (target.requestPointerLock) {
+                    target.requestPointerLock();
+                }
+                document.getElementById('countdownTimer').style.display = 'flex';
+                document.getElementById('lockedMessage').style.display = 'none';
+                document.getElementById("lockButton").style.display = "none"
+                isPointerLocked = true;
+            } else {
+                if (document.exitPointerLock) {
+                    document.exitPointerLock();
+                }
+                document.getElementById('lockedMessage').style.display = 'none';
+                isPointerLocked = false;
+            }
+
+            // Toggle fullscreen
+            if (!isFullscreen) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+                isFullscreen = true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                isFullscreen = false;
+            }
+
+            // Start or reset the countdown timer
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            countdown = 60; // Reset the countdown value to 60 seconds
+            updateCountdown(); // Initial update
+            countdownInterval = setInterval(updateCountdown, 1000); // Update countdown every second
+        }
+
+        // Function to update the countdown timer
+        function updateCountdown() {
+            document.getElementById('countdownTimer').textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                document.getElementById('countdownTimer').textContent = "Time's up!";
+            } else if (countdown === 30 && isFullscreen) { // Check for 30 seconds and fullscreen
+                playAudio();
+            }
+            countdown--;
+        }
+
+        // Function to play the audio
+        function playAudio() {
+            const audio = document.getElementById('audio');
+            if (audio) {
+                audio.volume = 1; // Set the volume to 100%
+                audio.play();
+            }
+        }
+
+        // Attach the initial click event listener to the button
+        document.getElementById('lockButton').addEventListener('click', toggleLockPointerAndFullscreen);
+
+        // Keydown event listener
+        document.addEventListener('keydown', function(event) {
+            keysPressed.add(event.key);
+
+            // Prevent keyboard interaction while in fullscreen
+            if (isFullscreen) {
+                event.preventDefault();
+            }
+
+            // Remove keys from the Set after a timeout (e.g., 1 second)
+            setTimeout(() => {
+                keysPressed.clear();
+            }, 1000);
+        });
+
+        // Keyup event listener
+        document.addEventListener('keyup', function(event) {
+            keysPressed.delete(event.key);
+        });
+    </script>
+</body>
+</html>
